@@ -22,9 +22,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 @SpringBootApplication
-public class AuthServerApplication {
+public class AuthServerApplication extends WebMvcConfigurerAdapter{
 	Logger logger = LoggerFactory.getLogger(AuthServerApplication.class);
 	final Marker REQUEST_MARKER = MarkerFactory.getMarker("HTTP_REQUEST");
 
@@ -57,14 +58,17 @@ public class AuthServerApplication {
 			public void doFilter(ServletRequest arg0, ServletResponse arg1, FilterChain arg2)
 					throws IOException, ServletException {
 				HttpServletRequest req = (HttpServletRequest)arg0;
+				logger.info("--------- userprincipal : {}", req.getUserPrincipal());
 				logger.info("--------- call for {}", req.getRequestURI());
 				Enumeration<String> names = req.getHeaderNames();
+				logger.info("----- headers");
 				String key = "";
 				while(names.hasMoreElements()){
 					key = names.nextElement();
 					logger.info(REQUEST_MARKER, "{} : {}", key, req.getHeader(key));
 				}
 				String paramKey = "";
+				logger.info("----- params");
 				Enumeration<String> params = req.getParameterNames();
 				while(params.hasMoreElements()){
 					paramKey = params.nextElement();
@@ -82,4 +86,6 @@ public class AuthServerApplication {
 		return bean;
 
 	}
+	
+	
 }

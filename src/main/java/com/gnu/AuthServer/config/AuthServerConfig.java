@@ -28,6 +28,7 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 	
 	@Autowired
 	TokenStore tokenStore;
+	
 	/**
 	 * endpoint에 대한 설정을 담당하는 메소드
 	 * 기본 endpoint
@@ -37,7 +38,7 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 	@Override
 	public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
 		endpoints.tokenStore(tokenStore); // tokenStore 설정, 현재 프로젝트에서는 redis가 tokenStore bean으로 설정되어 있음
-		endpoints.allowedTokenEndpointRequestMethods(HttpMethod.GET, HttpMethod.POST);
+		endpoints.allowedTokenEndpointRequestMethods(HttpMethod.POST, HttpMethod.OPTIONS);
 		endpoints.authenticationManager(authenticationManager);
 		endpoints.tokenEnhancer((token, authentication) -> {
 			/*
@@ -82,13 +83,13 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 		.secret("secret")
 		.authorities("GET_AUTH_CODE")
 		.authorizedGrantTypes(GrantTypes.AUTHORIZATION_CODE, GrantTypes.REFRESH_TOKEN)
-		.accessTokenValiditySeconds(200)
-		.refreshTokenValiditySeconds(300)
+		.accessTokenValiditySeconds(180)
+		.refreshTokenValiditySeconds(360)
 		.scopes("read","write")
-		.autoApprove("true")
+		.autoApprove("true") // 권한의 허용 여부에 대한 확인(/confirm_access)을 할지 여부
 		.and()
 		.withClient("resourceServer")
 		.secret("resourceSecret")
-		.authorities("RESOURCE"); // 해당 client에 대해 Authorities 부여, 이를 바탕으로a checkTokenAccess의 접근제어를 통과한다.
+		.authorities("RESOURCE"); // 해당 client에 대해 Authorities 부여, 이를 바탕으로 checkTokenAccess의 접근제어를 통과한다.
 	}
 }
