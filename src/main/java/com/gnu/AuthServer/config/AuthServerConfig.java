@@ -4,8 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
@@ -21,6 +23,10 @@ import com.gnu.AuthServer.utils.GrantTypes;
 public class AuthServerConfig extends AuthorizationServerConfigurerAdapter { 
 	
 	@Autowired
+	@Qualifier("authenticationManagerBean")
+	private AuthenticationManager authenticationManager;
+	
+	@Autowired
 	TokenStore tokenStore;
 	/**
 	 * endpoint에 대한 설정을 담당하는 메소드
@@ -32,6 +38,7 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 	public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
 		endpoints.tokenStore(tokenStore); // tokenStore 설정, 현재 프로젝트에서는 redis가 tokenStore bean으로 설정되어 있음
 		endpoints.allowedTokenEndpointRequestMethods(HttpMethod.GET, HttpMethod.POST);
+		endpoints.authenticationManager(authenticationManager);
 		endpoints.tokenEnhancer((token, authentication) -> {
 			/*
 			 * 발급되는 토큰에 부가정보를 담아 리턴함
@@ -46,6 +53,10 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 	/**
 	 * 보안에 관련된 설정
 	 * 권한, 접근제어등은 여기서 설정한다.
+	 * 
+	 * 보안이 요구되는 endpoints (기본은 denyAll() 이므로 적절히 고쳐서 사용한다)
+	 * 1) ~~/check_token (resource server가 rest로 token의 검증을 요청할 때 사용하는 endpoint, checkTokenAcess 로 조절)
+	 * 2) ~~/token_key (JWT 사용시, 토큰 검증을 위한 공개키를 노출하는 endpoint, tokenKeyAccess로 조절)
 	 */
 	@Override
 	public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
@@ -67,8 +78,17 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 		.scopes("read")
 		.accessTokenValiditySeconds(180)
 		.and()
+		.withClient("code")
+		.secret("secret")
+		.authorities("GET_AUTH_CODE")
+		.authorizedGrantTypes(GrantTypes.AUTHORIZATION_CODE, GrantTypes.REFRESH_TOKEN)
+		.accessTokenValiditySeconds(200)
+		.refreshTokenValiditySeconds(300)
+		.scopes("read","write")
+		.autoApprove("true")
+		.and()
 		.withClient("resourceServer")
 		.secret("resourceSecret")
-		.authorities("RESOURCE"); // 해당 client에 대해 Authorities 부여, 이를 바탕으로 checkTokenAccess의 접근제어를 통과한다.
+		.authorities("RESOURCE"); // 해당 client에 대해 Authorities 부여, 이를 바탕으로a checkTokenAccess의 접근제어를 통과한다.
 	}
 }
