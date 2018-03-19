@@ -1,17 +1,9 @@
 package com.gnu.AuthServer.config;
 
-import java.io.IOException;
-import java.util.Enumeration;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,16 +13,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
+import org.springframework.security.oauth2.common.exceptions.OAuth2Exception;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
-import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;import org.springframework.security.oauth2.provider.ClientDetails;
+import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
+import org.springframework.security.oauth2.provider.AuthorizationRequest;
+import org.springframework.security.oauth2.provider.ClientDetails;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
-import org.springframework.security.oauth2.provider.ClientRegistrationException;
+import org.springframework.security.oauth2.provider.DefaultSecurityContextAccessor;
+import org.springframework.security.oauth2.provider.OAuth2Request;
+import org.springframework.security.oauth2.provider.SecurityContextAccessor;
+import org.springframework.security.oauth2.provider.TokenRequest;
+import org.springframework.security.oauth2.provider.error.WebResponseExceptionTranslator;
+import org.springframework.security.oauth2.provider.request.DefaultOAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 
 import com.gnu.AuthServer.AuthInnerFilter;
@@ -46,16 +46,27 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 	private AuthenticationManager authenticationManager;
 	
 	@Autowired
+	ClientDetailsService clientDetailsService;
+	
+	@Autowired
 	TokenStore tokenStore;
 	
 	/**
 	 * endpoint에 대한 설정을 담당하는 메소드
 	 * 기본 endpoint
-	 * 1) ~~/authorize -> request token을 받는다. 나중에 access token 발급에 쓰일 수 있다. 
-	 * 2) ~~/token_access -> protected resources에 엑세스하기 위한 access token을 발급한다.
+	 * 1) ~~/authorize -> request token을 받는다. 나중에 access token 발급에 쓰일 수 있다. 이 단계에서는 httpBasic의 인증에 설정 해 놓은 id, pw를 basic auth로 사용한다
+	 * 2) ~~/token_access -> protected resources에 엑세스하기 위한 access token을 발급한다. 이 단계에서는 client id, secret을 basic auth에 사용한다 (secret 생략 가능)
 	 */
 	@Override
 	public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
+		endpoints.exceptionTranslator(new WebResponseExceptionTranslator() {
+			
+			@Override
+			public ResponseEntity<OAuth2Exception> translate(Exception e) throws Exception {
+				e.printStackTrace();
+				return null; 
+			}
+		});
 		endpoints.tokenStore(tokenStore); // tokenStore 설정, 현재 프로젝트에서는 redis가 tokenStore bean으로 설정되어 있음
 		endpoints.allowedTokenEndpointRequestMethods(HttpMethod.POST, HttpMethod.OPTIONS);
 		endpoints.authenticationManager(authenticationManager);
@@ -69,9 +80,74 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 			((DefaultOAuth2AccessToken)token).setAdditionalInformation(map);
 			return token;
 		});
-		endpoints.userDetailsService(arg0 -> {
-			System.out.println(arg0);
-			return User.withUsername("code").password("pass").authorities("UserGrant").build();
+		SecurityContextAccessor securityContextAccessor = new DefaultSecurityContextAccessor();
+		endpoints.requestFactory(new DefaultOAuth2RequestFactory(clientDetailsService){	
+			/**
+			 * 
+			 * ~~/oauth/token 에서 호출하는 메소드
+			 * @param requestParameters 클라이언트가 보낸 요청
+			 * @param authenticatedClient request_token에 부합하는 client
+			 * @return
+			 * @see org.springframework.security.oauth2.provider.endpoint.TokenEndpoint#postAccessToken
+			 * 
+			 */
+			@Override
+			public TokenRequest createTokenRequest(Map<String, String> requestParameters, ClientDetails authenticatedClient) {
+				return super.createTokenRequest(requestParameters, authenticatedClient);
+			}
+			
+			@Override
+			public OAuth2Request createOAuth2Request(AuthorizationRequest request) {
+				// request token 발급시 사용했던 basic auth에 담긴 securityContext를 accessor로 사용한다
+				System.out.println(securityContextAccessor.getAuthorities());
+				Collection<String> scopes = new HashSet<String>();
+				// request token을 요청한 user의 Authority 기준으로 자동으로 scope를 설정한다
+				securityContextAccessor.getAuthorities().forEach(value->{
+					scopes.add(value.getAuthority());
+				});
+				request.setScope(scopes);
+				return super.createOAuth2Request(request);
+			}			
+
+			/**
+			 * 
+			 * scope가 user의 role과 일치하는지 확인한다 (가장 마지막 단계)
+			 * 
+			 * @param checkUserScopes
+			 */
+			@Override
+			public void setCheckUserScopes(boolean checkUserScopes) {
+				super.setCheckUserScopes(false);
+			}
+
+			/**
+			 * ~~/oauth/authorize에서 호출하는 메소드
+			 * request_token을 발급 받은 후 access_token을 발급하기 위한 request를 만든다
+			 * 
+			 * @param authorizationParameters
+			 * @return
+			 * @see org.springframework.security.oauth2.provider.endpoint.AuthorizationEndpoint#authorize
+			 */
+			@Override
+			public AuthorizationRequest createAuthorizationRequest(Map<String, String> authorizationParameters) {
+				// 2
+				AuthorizationRequest request = super.createAuthorizationRequest(authorizationParameters);
+				 if (securityContextAccessor.isUser()) {
+					 	 // 여기서 먼저 scope 설정하려 하면 에러남. access_token 발급시에 바꿔 끼우도록
+						 request.setAuthorities(securityContextAccessor.getAuthorities());
+			    }
+				return request;
+			}
+
+			@Override
+			public void setSecurityContextAccessor(SecurityContextAccessor securityContextAccessor) {
+				super.setSecurityContextAccessor(securityContextAccessor);
+			}
+			
+			
+			
+			
+			
 		});
 	}
 	/**
@@ -104,6 +180,7 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 		.accessTokenValiditySeconds(180)
 		.and()
 		.withClient("code")
+		.scopes("dummy") // 스코프가 필수값이라 넣긴하는데 OAuth2RequestFactory 에서 UserRole로 세팅하도록 설정할 것임
 		/* If the client was issued a client secret, then the server must authenticate the client. One way to authenticate the client is to accept another parameter in this request, client_secret. Alternately the authorization server can use HTTP Basic Auth.
 		 * secret을 발급하여 token을 발급하면 refresh 할 때도 secret을 입력해야 하는 문제가 생김. 그러므로 접근 제어는 HTTP Basic Auth에 맡기고 token 발급시에는 client_secret을 배제
 		 */
@@ -111,7 +188,7 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 		.authorizedGrantTypes(GrantTypes.AUTHORIZATION_CODE, GrantTypes.REFRESH_TOKEN)
 		.accessTokenValiditySeconds(600)
 		.refreshTokenValiditySeconds(1800)
-		.scopes("read","write")
+		.redirectUris("http://localhost:7077/resources/open/callback", "https://www.getpostman.com/oauth2/callback")
 		.autoApprove("true") // 권한의 허용 여부에 대한 확인(/confirm_access)을 할지 여부
 		.and()
 		.withClient("resourceServer")

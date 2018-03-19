@@ -26,15 +26,14 @@ public class AuthServerWebSecurityConfig extends WebSecurityConfigurerAdapter {
 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 		// TODO Auto-generated method stub
 		auth.inMemoryAuthentication()
-		.withUser("u").password("p").authorities("UserGrant").and()
-		.withUser("uu").password("pp").authorities("UserGrant");
+		.withUser("username").password("p").authorities("read", "write"); // role과 authority의 차이는 앞에 prefix (ROLE_) 가 자동으로 붙냐 안 붙냐 차이 정도
 	}
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http.formLogin().disable().httpBasic().and().authorizeRequests()
-		.antMatchers("/oauth/authorize").access("hasAuthority('UserGrant')")
-		.antMatchers("/oauth/token").access("hasAuthority('UserGrant')")
+		.antMatchers("/oauth/authorize").authenticated()
+		.antMatchers("/oauth/token").authenticated()
 		.anyRequest().authenticated().and()
 		.csrf().disable()
 		.addFilterBefore(new AuthInnerFilter(), BasicAuthenticationFilter.class);
