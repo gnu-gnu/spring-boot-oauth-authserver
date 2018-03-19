@@ -41,11 +41,11 @@ public class AuthServerApplication extends WebMvcConfigurerAdapter{
 		return new RedisTokenStore(factory);
 	}
 	
-	@Bean
+	// @Bean
 	public FilterRegistrationBean allFilter(){
 		FilterRegistrationBean bean = new FilterRegistrationBean();
 		bean.setOrder(0);
-		bean.addUrlPatterns("/*");
+		bean.addUrlPatterns("/**");
 		bean.setFilter(new Filter() {
 			
 			@Override

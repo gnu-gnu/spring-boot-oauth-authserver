@@ -1,27 +1,46 @@
 package com.gnu.AuthServer.config;
 
+import java.io.IOException;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
-import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
+import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;import org.springframework.security.oauth2.provider.ClientDetails;
+import org.springframework.security.oauth2.provider.ClientDetailsService;
+import org.springframework.security.oauth2.provider.ClientRegistrationException;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 
+import com.gnu.AuthServer.AuthInnerFilter;
 import com.gnu.AuthServer.utils.GrantTypes;
 
 @Configuration
 @EnableAuthorizationServer // OAuthServer는 AuthorizationServer (권한 발급) 및 ResourceServer(보호된 자원이 위치하는 서버)가 있음
 public class AuthServerConfig extends AuthorizationServerConfigurerAdapter { 
-	
+	Logger logger = LoggerFactory.getLogger(AuthServerConfig.class);
+	final Marker REQUEST_MARKER = MarkerFactory.getMarker("HTTP_REQUEST");
 	@Autowired
 	@Qualifier("authenticationManagerBean")
 	private AuthenticationManager authenticationManager;
@@ -50,6 +69,10 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 			((DefaultOAuth2AccessToken)token).setAdditionalInformation(map);
 			return token;
 		});
+		endpoints.userDetailsService(arg0 -> {
+			System.out.println(arg0);
+			return User.withUsername("code").password("pass").authorities("UserGrant").build();
+		});
 	}
 	/**
 	 * 보안에 관련된 설정
@@ -61,6 +84,7 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 	 */
 	@Override
 	public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
+		security.addTokenEndpointAuthenticationFilter(new AuthInnerFilter()); // ~~/authorize 에 대한 필터
 		security.checkTokenAccess("hasAuthority('RESOURCE')"); // ~~/check_token으로 remoteTokenService가 토큰의 해석을 의뢰할 경우, 해당 endpoint의 권한 설정(기본 denyAll())
 		security.accessDeniedHandler((request, response, exception) -> exception.printStackTrace());
 	}
@@ -80,11 +104,13 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 		.accessTokenValiditySeconds(180)
 		.and()
 		.withClient("code")
-		.secret("secret")
-		.authorities("GET_AUTH_CODE")
+		/* If the client was issued a client secret, then the server must authenticate the client. One way to authenticate the client is to accept another parameter in this request, client_secret. Alternately the authorization server can use HTTP Basic Auth.
+		 * secret을 발급하여 token을 발급하면 refresh 할 때도 secret을 입력해야 하는 문제가 생김. 그러므로 접근 제어는 HTTP Basic Auth에 맡기고 token 발급시에는 client_secret을 배제
+		 */
+		// .secret("secret")  
 		.authorizedGrantTypes(GrantTypes.AUTHORIZATION_CODE, GrantTypes.REFRESH_TOKEN)
-		.accessTokenValiditySeconds(180)
-		.refreshTokenValiditySeconds(360)
+		.accessTokenValiditySeconds(600)
+		.refreshTokenValiditySeconds(1800)
 		.scopes("read","write")
 		.autoApprove("true") // 권한의 허용 여부에 대한 확인(/confirm_access)을 할지 여부
 		.and()
