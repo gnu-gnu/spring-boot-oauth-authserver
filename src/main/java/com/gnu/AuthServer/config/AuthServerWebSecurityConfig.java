@@ -30,14 +30,6 @@ import com.gnu.AuthServer.AuthInnerFilter;
 public class AuthServerWebSecurityConfig extends WebSecurityConfigurerAdapter {
 	Logger logger = LoggerFactory.getLogger(AuthServerWebSecurityConfig.class);
 	final Marker REQUEST_MARKER = MarkerFactory.getMarker("HTTP_REQUEST");
-	/** AuthenticationManagerBean을 직접 삽입
-	@Override
-	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-		auth.inMemoryAuthentication()
-		.withUser("username").password("p").authorities("read", "write").and() // role과 authority의 차이는 앞에 prefix (ROLE_) 가 자동으로 붙냐 안 붙냐 차이 정도
-		.withUser("read").password("p").authorities("read");
-	}
-	*/
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
@@ -48,22 +40,23 @@ public class AuthServerWebSecurityConfig extends WebSecurityConfigurerAdapter {
 		.csrf().disable()
 		.addFilterBefore(new AuthInnerFilter(), BasicAuthenticationFilter.class);
 	}
+	
+	/**
+	 * inMemory 기반의 기본 인증을 AuthenticationManager로 대체
+	 */
 	@Override
-	@Bean
+	@Bean(name="customAuthManager")
 	public AuthenticationManager authenticationManagerBean() throws Exception {
 		AuthenticationProvider provider = new DaoAuthenticationProvider(){
-
 			@Override
 			public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+					// TODO 현재는 입력한 아이디 기준으로 무조건 권한 발급, DB 기준으로 고치도록
 					return new UsernamePasswordAuthenticationToken(authentication.getPrincipal(), authentication.getCredentials(), AuthorityUtils.createAuthorityList("read", "write"));
 			}
-
 			@Override
 			public boolean supports(Class<?> authentication) {
-				// TODO Auto-generated method stub
 				return true;
 			}
-			
 		};
 		List<AuthenticationProvider> providers = new ArrayList<AuthenticationProvider>();
 		providers.add(provider);

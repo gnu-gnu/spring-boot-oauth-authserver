@@ -5,18 +5,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+import javax.annotation.Resource;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
-import org.springframework.security.oauth2.common.exceptions.OAuth2Exception;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
@@ -29,7 +28,6 @@ import org.springframework.security.oauth2.provider.DefaultSecurityContextAccess
 import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.security.oauth2.provider.SecurityContextAccessor;
 import org.springframework.security.oauth2.provider.TokenRequest;
-import org.springframework.security.oauth2.provider.error.WebResponseExceptionTranslator;
 import org.springframework.security.oauth2.provider.request.DefaultOAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 
@@ -41,8 +39,7 @@ import com.gnu.AuthServer.utils.GrantTypes;
 public class AuthServerConfig extends AuthorizationServerConfigurerAdapter { 
 	Logger logger = LoggerFactory.getLogger(AuthServerConfig.class);
 	final Marker REQUEST_MARKER = MarkerFactory.getMarker("HTTP_REQUEST");
-	@Autowired
-	@Qualifier("authenticationManagerBean")
+	@Resource(name="customAuthManager")
 	private AuthenticationManager authenticationManager;
 	
 	@Autowired
@@ -59,14 +56,6 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 	 */
 	@Override
 	public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
-		endpoints.exceptionTranslator(new WebResponseExceptionTranslator() {
-			
-			@Override
-			public ResponseEntity<OAuth2Exception> translate(Exception e) throws Exception {
-				e.printStackTrace();
-				return null; 
-			}
-		});
 		endpoints.tokenStore(tokenStore); // tokenStore 설정, 현재 프로젝트에서는 redis가 tokenStore bean으로 설정되어 있음
 		endpoints.allowedTokenEndpointRequestMethods(HttpMethod.POST, HttpMethod.OPTIONS);
 		endpoints.authenticationManager(authenticationManager);
@@ -74,21 +63,12 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 			/*
 			 * 발급되는 토큰에 부가정보를 담아 리턴함
 			 */
-			;
 			Map<String, Object> map = new HashMap<String, Object>();
 			map.put("hello", "world");
 			((DefaultOAuth2AccessToken)token).setAdditionalInformation(map);
 			return token;
 		});
 		SecurityContextAccessor securityContextAccessor = new DefaultSecurityContextAccessor();
-		/*endpoints.userDetailsService(new UserDetailsService() {
-			
-			@Override
-			public UserDetails loadUserByUsername(String arg0) throws UsernameNotFoundException {
-				SecureRandom sRandom = new SecureRandom();
-				return new User(arg0, String.valueOf(sRandom.ints(Integer.MIN_VALUE, Integer.MAX_VALUE)), securityContextAccessor.getAuthorities());
-			}
-		});*/
 		endpoints.requestFactory(new DefaultOAuth2RequestFactory(clientDetailsService){	
 			/**
 			 * 
@@ -150,11 +130,6 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 			public void setSecurityContextAccessor(SecurityContextAccessor securityContextAccessor) {
 				super.setSecurityContextAccessor(securityContextAccessor);
 			}
-			
-			
-			
-			
-			
 		});
 	}
 	/**
@@ -198,6 +173,7 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 		.redirectUris("http://localhost:7077/resources/open/callback", "https://www.getpostman.com/oauth2/callback")
 		.autoApprove("true") // 권한의 허용 여부에 대한 확인(/confirm_access)을 할지 여부
 		.and()
+		// redis tokenstore를 사용하지 않을 경우, check_token에서 사용하는 client, secret
 		.withClient("resourceServer")
 		.secret("resourceSecret")
 		.authorities("RESOURCE"); // 해당 client에 대해 Authorities 부여, 이를 바탕으로 checkTokenAccess의 접근제어를 통과한다.
