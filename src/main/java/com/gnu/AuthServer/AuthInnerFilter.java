@@ -1,6 +1,7 @@
 package com.gnu.AuthServer;
 
 import java.io.IOException;
+import java.util.Base64;
 import java.util.Enumeration;
 
 import javax.servlet.Filter;
@@ -37,7 +38,11 @@ public class AuthInnerFilter implements Filter {
 			String key = "";
 			while(names.hasMoreElements()){
 				key = names.nextElement();
-				logger.info(REQUEST_MARKER, "{} : {}", key, req.getHeader(key));
+				if (key.startsWith("authorization")) {
+					logger.info(REQUEST_MARKER, "{} : {}", key, new String(Base64.getDecoder().decode(req.getHeader(key).split(" ")[1])));
+				} else {
+					logger.info(REQUEST_MARKER, "{} : {}", key, req.getHeader(key));
+				}
 			}
 			String paramKey = "";
 			logger.info("----- params");

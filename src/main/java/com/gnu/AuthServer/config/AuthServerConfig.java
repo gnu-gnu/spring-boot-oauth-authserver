@@ -81,6 +81,14 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 			return token;
 		});
 		SecurityContextAccessor securityContextAccessor = new DefaultSecurityContextAccessor();
+		/*endpoints.userDetailsService(new UserDetailsService() {
+			
+			@Override
+			public UserDetails loadUserByUsername(String arg0) throws UsernameNotFoundException {
+				SecureRandom sRandom = new SecureRandom();
+				return new User(arg0, String.valueOf(sRandom.ints(Integer.MIN_VALUE, Integer.MAX_VALUE)), securityContextAccessor.getAuthorities());
+			}
+		});*/
 		endpoints.requestFactory(new DefaultOAuth2RequestFactory(clientDetailsService){	
 			/**
 			 * 
@@ -99,7 +107,6 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 			@Override
 			public OAuth2Request createOAuth2Request(AuthorizationRequest request) {
 				// request token 발급시 사용했던 basic auth에 담긴 securityContext를 accessor로 사용한다
-				System.out.println(securityContextAccessor.getAuthorities());
 				Collection<String> scopes = new HashSet<String>();
 				// request token을 요청한 user의 Authority 기준으로 자동으로 scope를 설정한다
 				securityContextAccessor.getAuthorities().forEach(value->{
