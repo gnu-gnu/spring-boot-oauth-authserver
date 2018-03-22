@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
@@ -39,7 +37,7 @@ import com.gnu.AuthServer.utils.GrantTypes;
 public class AuthServerConfig extends AuthorizationServerConfigurerAdapter { 
 	Logger logger = LoggerFactory.getLogger(AuthServerConfig.class);
 	final Marker REQUEST_MARKER = MarkerFactory.getMarker("HTTP_REQUEST");
-	@Resource(name="customAuthManager")
+	@Autowired
 	private AuthenticationManager authenticationManager;
 	
 	@Autowired
