@@ -42,16 +42,16 @@ public class AuthServerApplication extends WebMvcConfigurerAdapter implements Co
 	@Override
 	public void run(String... arg0) throws Exception {
 		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-		UserEntity userShim = new UserEntity("gnu-shim", encoder.encode("pass"));
+		UserEntity userShim = new UserEntity("gnu", encoder.encode("pass"));
 		userShim.createAuthority("read");
 		userShim.createAuthority("write");
 		userShim.createAuthority("delete");
 		userShim.createAuthority("update");
 		userRepository.save(userShim);
-		UserEntity userNoh = new UserEntity("donghwan-noh", encoder.encode("pass"));
+		UserEntity userNoh = new UserEntity("noh", encoder.encode("pass"));
 		userNoh.createAuthority("read");
 		userRepository.save(userNoh);
-		UserEntity userJee = new UserEntity("Jeeinn-Yoo", encoder.encode("pass"));
+		UserEntity userJee = new UserEntity("jee", encoder.encode("pass"));
 		userNoh.createAuthority("read");
 		userNoh.createAuthority("write");
 		userNoh.createAuthority("update");

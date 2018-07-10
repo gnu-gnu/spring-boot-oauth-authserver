@@ -20,17 +20,14 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationManager;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import com.gnu.AuthServer.AuthInnerFilter;
-import com.gnu.AuthServer.entity.AuthoritiesEntity;
-import com.gnu.AuthServer.entity.UserEntity;
 import com.gnu.AuthServer.repository.UserRepository;
+import com.gnu.AuthServer.security.AuthUserDetails;
+import com.gnu.AuthServer.security.AuthUserDetailsService;
 
 @Configuration
 @EnableWebSecurity
@@ -39,31 +36,34 @@ public class AuthServerWebSecurityConfig extends WebSecurityConfigurerAdapter {
 	final Marker REQUEST_MARKER = MarkerFactory.getMarker("HTTP_REQUEST");
 	@Autowired
 	UserRepository userRepository;
+	@Autowired
+	AuthUserDetailsService userDetailsService;
 	BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-	
 
+	/**
+	 * PASSWORD GRANT는 authenticationManager를 통해서 이루어짐
+	 * 
+	 */
 	@Override
 	protected AuthenticationManager authenticationManager() throws Exception {
-		AuthenticationProvider provider = new DaoAuthenticationProvider(){
+
+		AuthenticationProvider provider = new DaoAuthenticationProvider() {
 			@Override
 			public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-					logger.info(authentication.getName()+"... trying to login");
-					String inputName = authentication.getName();
-					String encodedCredential = encoder.encode(authentication.getCredentials().toString());
-					UserEntity findEntity = userRepository.findByUsername(inputName);
-					if(null == findEntity){
-						throw new UsernameNotFoundException(inputName);
-					} else if(!encoder.matches((CharSequence)authentication.getCredentials(), findEntity.getPassword())){
-						throw new BadCredentialsException("bad credential");
-					} else {
-						List<GrantedAuthority> authority = new ArrayList<GrantedAuthority>();
-						for(AuthoritiesEntity e : findEntity.getAuthorities()){
-							authority.add(new SimpleGrantedAuthority(e.getRoleName()));
-						}
-						System.out.println(authority.toString());
-						return new UsernamePasswordAuthenticationToken(authentication.getPrincipal(), encodedCredential, authority);
-					}
+				logger.info(authentication.getName() + "... auth start");
+				String username = authentication.getName();
+				CharSequence password = (CharSequence) authentication.getCredentials();
+
+				AuthUserDetails user = (AuthUserDetails) userDetailsService.loadUserByUsername(username);
+				
+				if (!encoder.matches(password, user.getPassword())) {
+					logger.info(authentication.getName() + "... bad credential");
+					throw new BadCredentialsException("bad credential");
+				} else {
+					return new UsernamePasswordAuthenticationToken(user.getUsername(), password.toString(), user.getAuthorities());
+				}
 			}
+
 			@Override
 			public boolean supports(Class<?> authentication) {
 				return true;
@@ -71,20 +71,15 @@ public class AuthServerWebSecurityConfig extends WebSecurityConfigurerAdapter {
 		};
 		List<AuthenticationProvider> providers = new ArrayList<AuthenticationProvider>();
 		providers.add(provider);
-		return new ProviderManager(providers, new OAuth2AuthenticationManager()); 
+		return new ProviderManager(providers, new OAuth2AuthenticationManager());
 	}
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http.formLogin().disable().httpBasic().and().authorizeRequests()
-		.antMatchers("/h2/**").permitAll()
-		.antMatchers("/oauth/authorize").authenticated()
-		.antMatchers("/oauth/token").authenticated()
-		.anyRequest().authenticated().and()
-		.csrf().disable()
-		.addFilterBefore(new AuthInnerFilter(), BasicAuthenticationFilter.class);
+		http.httpBasic().disable().authorizeRequests().antMatchers("/h2/**").permitAll().antMatchers("/oauth/token")
+				.permitAll().anyRequest().authenticated().and().formLogin().and().csrf().disable()
+				.addFilterBefore(new AuthInnerFilter(), BasicAuthenticationFilter.class);
 		http.headers().frameOptions().disable();
 	}
-	
 
 }
