@@ -27,7 +27,10 @@ public class AuthUserDetailsService implements UserDetailsService{
 			logger.info(username+"... user not found");
 			throw new UsernameNotFoundException(username);
 		}
-		return new AuthUserDetails(findEntity);
+		logger.info(username+"... login success");
+		AuthUserDetails details = new AuthUserDetails(findEntity);
+		details.getAuthorities().forEach(System.out::println);
+		return details;
 	}
 
 }

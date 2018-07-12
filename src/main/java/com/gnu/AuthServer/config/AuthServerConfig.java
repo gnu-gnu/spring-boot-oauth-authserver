@@ -1,10 +1,7 @@
 package com.gnu.AuthServer.config;
 
 import java.util.Arrays;
-import java.util.Collection;import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -12,39 +9,23 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
-import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
-import org.springframework.security.oauth2.provider.AuthorizationRequest;
 import org.springframework.security.oauth2.provider.ClientDetails;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.ClientRegistrationException;
-import org.springframework.security.oauth2.provider.DefaultSecurityContextAccessor;
-import org.springframework.security.oauth2.provider.OAuth2Authentication;
-import org.springframework.security.oauth2.provider.OAuth2Request;
-import org.springframework.security.oauth2.provider.SecurityContextAccessor;
-import org.springframework.security.oauth2.provider.TokenRequest;
 import org.springframework.security.oauth2.provider.client.BaseClientDetails;
-import org.springframework.security.oauth2.provider.request.DefaultOAuth2RequestFactory;
-import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
-import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
-import org.springframework.security.oauth2.provider.token.TokenEnhancer;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 
 import com.gnu.AuthServer.AuthInnerFilter;
 import com.gnu.AuthServer.utils.GrantTypes;
-
-import ch.qos.logback.core.net.SyslogOutputStream;
 
 @Configuration
 @EnableAuthorizationServer // OAuthServer는 AuthorizationServer (권한 발급) 및 ResourceServer(보호된 자원이 위치하는 서버)가 있음
@@ -62,12 +43,14 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 				public ClientDetails loadClientByClientId(String clientId) throws ClientRegistrationException {
 					System.out.println("clientId check...");
 					Set<String> set = new HashSet<>();
-					set.add("http://localhost:7077/resources/open/callback");
+					// set.add("http://localhost:7077/resources/open/callback");
 					BaseClientDetails details = new BaseClientDetails();
 					details.setClientId("lookin");
-					details.setAuthorizedGrantTypes(Arrays.asList(GrantTypes.AUTHORIZATION_CODE));
+					details.setAuthorizedGrantTypes(Arrays.asList(GrantTypes.AUTHORIZATION_CODE, GrantTypes.PASSWORD));
+					details.setClientSecret("hello");
 					details.setRegisteredRedirectUri(set);
 					details.setScope(Arrays.asList("check"));
+					details.setAuthorities(AuthorityUtils.commaSeparatedStringToAuthorityList("read"));
 					return details;
 				}
 			};
@@ -85,7 +68,6 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 		endpoints.tokenStore(tokenStore); // tokenStore 설정, 현재 프로젝트에서는 redis가 tokenStore bean으로 설정되어 있음
 		endpoints.allowedTokenEndpointRequestMethods(HttpMethod.POST, HttpMethod.OPTIONS);
 		endpoints.authenticationManager(authenticationManager);
-		
 	}
 	/**
 	 * 보안에 관련된 설정
@@ -98,8 +80,9 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 	@Override
 	public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
 		security.addTokenEndpointAuthenticationFilter(new AuthInnerFilter()); // ~~/authorize 에 대한 필터
+		security.allowFormAuthenticationForClients(); // 기본적으로 HTTP HEADER AUTH가 적용되므로, FORM 전송으로 AUTH하기 위해서 적용
 		security.checkTokenAccess("hasAuthority('RESOURCE')"); // ~~/check_token으로 remoteTokenService가 토큰의 해석을 의뢰할 경우, 해당 endpoint의 권한 설정(기본 denyAll())
-		security.accessDeniedHandler((request, response, exception) -> exception.printStackTrace());
+		security.accessDeniedHandler((request, response, exception) -> logger.error(exception.getMessage()));
 	}
 	/**
 	 * OAuth서버에 접근을 요청하는 Client에 관한 설정
