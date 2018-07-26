@@ -12,9 +12,11 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.oauth2.provider.token.store.InMemoryTokenStore;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
 import org.springframework.security.web.FilterChainProxy;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
@@ -35,13 +37,17 @@ public class AuthServerApplication extends WebMvcConfigurerAdapter implements Co
 		SpringApplication.run(AuthServerApplication.class, args);
 	}
 	@Bean
+	@Profile("redis")
 	public TokenStore tokenStore(RedisConnectionFactory factory){
-		/**
-		 * redis를 token 저장소로 사용하기 위해 설정
-		 * 이 부분을 제거하면 inMemory 저장소를 사용함
-		 */
+		// Redis가 설정된 상태에서는 redis store
 		return new RedisTokenStore(factory);
 	}
+	@Bean
+	public TokenStore InMemoryTokenStore(){
+		// 기본 토큰 스토어는 테스트용도로 in-memory store
+		return new InMemoryTokenStore();
+	}
+
 	
 	/**
 	 * 초기 ID/PW 데이터 설정 및 권한(=scope로 이용) 부여

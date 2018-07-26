@@ -1,9 +1,5 @@
 package com.gnu.AuthServer.config;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
@@ -12,20 +8,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
-import org.springframework.security.oauth2.provider.ClientDetails;
-import org.springframework.security.oauth2.provider.ClientDetailsService;
-import org.springframework.security.oauth2.provider.ClientRegistrationException;
-import org.springframework.security.oauth2.provider.client.BaseClientDetails;
-import org.springframework.security.oauth2.provider.token.TokenStore;
 
 import com.gnu.AuthServer.AuthInnerFilter;
-import com.gnu.AuthServer.utils.GrantTypes;
+import com.gnu.AuthServer.service.AuthClientDetailsService;
+import com.gnu.AuthServer.service.AuthTokenService;
 
 @Configuration
 @EnableAuthorizationServer // OAuthServer는 AuthorizationServer (권한 발급) 및 ResourceServer(보호된 자원이 위치하는 서버)가 있음
@@ -35,26 +26,9 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 	@Autowired
 	private AuthenticationManager authenticationManager;
 	@Autowired
-	TokenStore tokenStore;
-	
-	public ClientDetailsService ClientDetailsService() {
-			return new ClientDetailsService() {
-				@Override
-				public ClientDetails loadClientByClientId(String clientId) throws ClientRegistrationException {
-					System.out.println("clientId check...");
-					Set<String> set = new HashSet<>();
-					// set.add("http://localhost:7077/resources/open/callback");
-					BaseClientDetails details = new BaseClientDetails();
-					details.setClientId("lookin");
-					details.setAuthorizedGrantTypes(Arrays.asList(GrantTypes.AUTHORIZATION_CODE, GrantTypes.PASSWORD));
-					details.setClientSecret("hello");
-					details.setRegisteredRedirectUri(set);
-					details.setScope(Arrays.asList("check"));
-					details.setAuthorities(AuthorityUtils.commaSeparatedStringToAuthorityList("read"));
-					return details;
-				}
-			};
-		};
+	AuthClientDetailsService clientDetailsService;
+	@Autowired
+	AuthTokenService tokenService;
 	
 
 	/**
@@ -65,9 +39,9 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 	 */
 	@Override
 	public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
-		endpoints.tokenStore(tokenStore); // tokenStore 설정, 현재 프로젝트에서는 redis가 tokenStore bean으로 설정되어 있음
 		endpoints.allowedTokenEndpointRequestMethods(HttpMethod.POST, HttpMethod.OPTIONS);
 		endpoints.authenticationManager(authenticationManager);
+		endpoints.tokenServices(tokenService);
 	}
 	/**
 	 * 보안에 관련된 설정
@@ -89,6 +63,6 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 	 */
 	@Override
 	public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-		clients.withClientDetails(ClientDetailsService());
+		clients.withClientDetails(clientDetailsService);
 	}
 }
