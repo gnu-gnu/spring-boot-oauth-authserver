@@ -31,7 +31,7 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 import com.gnu.AuthServer.AuthInnerFilter;
 import com.gnu.AuthServer.repository.UserRepository;
 import com.gnu.AuthServer.security.AuthUserDetails;
-import com.gnu.AuthServer.security.AuthUserDetailsService;
+import com.gnu.AuthServer.service.AuthUserDetailsService;
 
 @Configuration
 @EnableWebSecurity

@@ -4,11 +4,13 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.oauth2.provider.ClientDetails;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.ClientRegistrationException;
 import org.springframework.security.oauth2.provider.client.BaseClientDetails;
+import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.stereotype.Service;
 
 import com.gnu.AuthServer.utils.GrantTypes;
@@ -16,9 +18,12 @@ import com.gnu.AuthServer.utils.GrantTypes;
 @Service
 public class AuthClientDetailsService implements ClientDetailsService {
 
+	@Autowired
+	TokenStore tokenStore;
+	
 	@Override
 	public ClientDetails loadClientByClientId(String arg0) throws ClientRegistrationException {
-		System.out.println("clientId check...");
+		System.out.println("client details service");
 		Set<String> set = new HashSet<>();
 		set.add("http://localhost:7077/resources/open/callback");
 		BaseClientDetails details = new BaseClientDetails();

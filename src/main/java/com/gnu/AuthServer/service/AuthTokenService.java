@@ -25,6 +25,7 @@ public class AuthTokenService extends DefaultTokenServices {
 		this.setTokenEnhancer(new TokenEnhancer() {
 			@Override
 			public OAuth2AccessToken enhance(OAuth2AccessToken accessToken, OAuth2Authentication authentication) {
+				System.out.println("token enhance");
 				return accessToken;
 			}
 		});

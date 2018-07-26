@@ -1,4 +1,4 @@
-package com.gnu.AuthServer.security;
+package com.gnu.AuthServer.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import com.gnu.AuthServer.entity.UserEntity;
 import com.gnu.AuthServer.repository.UserRepository;
+import com.gnu.AuthServer.security.AuthUserDetails;
 
 @Configuration
 public class AuthUserDetailsService implements UserDetailsService{

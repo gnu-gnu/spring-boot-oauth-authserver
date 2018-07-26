@@ -1,5 +1,7 @@
 package com.gnu.AuthServer.config;
 
+import java.util.Collection;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
@@ -8,11 +10,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
+import org.springframework.security.oauth2.provider.TokenGranter;
+import org.springframework.security.oauth2.provider.TokenRequest;
+import org.springframework.security.oauth2.provider.approval.Approval;
+import org.springframework.security.oauth2.provider.approval.ApprovalStore;
+import org.springframework.security.oauth2.provider.approval.TokenApprovalStore;
+import org.springframework.security.oauth2.provider.token.TokenStore;
 
 import com.gnu.AuthServer.AuthInnerFilter;
 import com.gnu.AuthServer.service.AuthClientDetailsService;
@@ -29,6 +38,8 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 	AuthClientDetailsService clientDetailsService;
 	@Autowired
 	AuthTokenService tokenService;
+	@Autowired
+	TokenStore tokenStore;
 	
 
 	/**
@@ -42,6 +53,9 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 		endpoints.allowedTokenEndpointRequestMethods(HttpMethod.POST, HttpMethod.OPTIONS);
 		endpoints.authenticationManager(authenticationManager);
 		endpoints.tokenServices(tokenService);
+		TokenApprovalStore approvalStore = new TokenApprovalStore();
+		approvalStore.setTokenStore(tokenStore);
+		endpoints.approvalStore(approvalStore);
 	}
 	/**
 	 * 보안에 관련된 설정
