@@ -10,8 +10,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import com.gnu.AuthServer.entity.UserEntity;
 import com.gnu.AuthServer.repository.UserRepository;
-import com.gnu.AuthServer.security.AuthUserDetails;
-
+/**
+ * 
+ * @author gnu-gnu(geunwoo.j.shim@gmail.com)
+ *
+ */
 @Configuration
 public class AuthUserDetailsService implements UserDetailsService{
 	Logger logger = LoggerFactory.getLogger(AuthUserDetailsService.class);
@@ -30,7 +33,6 @@ public class AuthUserDetailsService implements UserDetailsService{
 		}
 		logger.info(username+"... login success");
 		AuthUserDetails details = new AuthUserDetails(findEntity);
-		System.out.println(details);
 		return details;
 	}
 

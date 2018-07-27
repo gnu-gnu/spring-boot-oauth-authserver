@@ -32,9 +32,17 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 
 import com.gnu.AuthServer.AuthInnerFilter;
 import com.gnu.AuthServer.repository.UserRepository;
-import com.gnu.AuthServer.security.AuthUserDetails;
+import com.gnu.AuthServer.service.AuthUserDetails;
 import com.gnu.AuthServer.service.AuthUserDetailsService;
-
+/**
+ * 
+ * 기본적인 Web Security를 설정하는 Bean
+ * 웹 프로젝트의 Spring security 설정과 크게 다르지 않다.
+ * Password Grant 기반의 인증을 수행할 경우 ClientDetailsService를 거치지 않고 이 서비스의 AuthenticationManager만으로 인증 과정이 수행되고 Token이 발급된다
+ * 
+ * @author gnu-gnu(geunwoo.j.shim@gmail.com)
+ *
+ */
 @Configuration
 @EnableWebSecurity
 public class AuthServerWebSecurityConfig extends WebSecurityConfigurerAdapter {
@@ -47,10 +55,6 @@ public class AuthServerWebSecurityConfig extends WebSecurityConfigurerAdapter {
 	
 	BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 	
-	/**
-	 * PASSWORD GRANT는 authenticationManager를 통해서 이루어짐
-	 * 
-	 */
 	@Override
 	@Bean
 	protected AuthenticationManager authenticationManager() throws Exception {
@@ -63,6 +67,7 @@ public class AuthServerWebSecurityConfig extends WebSecurityConfigurerAdapter {
 				CharSequence password = (CharSequence) authentication.getCredentials();
 				Map<String, Object> details = new HashMap<>();
 				AuthUserDetails user = (AuthUserDetails) userDetailsService.loadUserByUsername(username);
+				@SuppressWarnings("unchecked")
 				Set<GrantedAuthority> autho = (Set<GrantedAuthority>) user.getAuthorities();
 				autho.add(new SimpleGrantedAuthority("ACTUATOR"));
 				if (!encoder.matches(password, user.getPassword())) {
@@ -80,7 +85,7 @@ public class AuthServerWebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 			@Override
 			public boolean supports(Class<?> authentication) {
-				return true;
+				return UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication);
 			}
 		};
 		List<AuthenticationProvider> providers = new ArrayList<AuthenticationProvider>();
@@ -92,7 +97,7 @@ public class AuthServerWebSecurityConfig extends WebSecurityConfigurerAdapter {
 	protected void configure(HttpSecurity http) throws Exception {
 		http.authorizeRequests().antMatchers("/h2/**").permitAll().anyRequest().authenticated().and().formLogin().and()
 				.csrf().disable().addFilterBefore(new AuthInnerFilter(), BasicAuthenticationFilter.class);
-		http.headers().frameOptions().disable();
+		http.headers().frameOptions().disable(); // UI redressing attack을 방지하기 위해 X-Frame-Options를 검증하는 부분, 편의상 disable
 	}
 
 }

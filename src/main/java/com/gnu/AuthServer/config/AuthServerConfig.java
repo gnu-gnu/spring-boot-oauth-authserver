@@ -2,8 +2,6 @@ package com.gnu.AuthServer.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.Marker;
-import org.slf4j.MarkerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -13,18 +11,22 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.A
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
-import org.springframework.security.oauth2.provider.approval.TokenApprovalStore;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 
 import com.gnu.AuthServer.AuthInnerFilter;
 import com.gnu.AuthServer.service.AuthClientDetailsService;
 import com.gnu.AuthServer.service.AuthTokenService;
 
+/**
+ * 
+ * OAuth 인가 서버
+ * @author gnu-gnu(geunwoo.j.shim@gmail.com)
+ *
+ */
 @Configuration
-@EnableAuthorizationServer // OAuthServer는 AuthorizationServer (권한 발급) 및 ResourceServer(보호된 자원이 위치하는 서버)가 있음
+@EnableAuthorizationServer
 public class AuthServerConfig extends AuthorizationServerConfigurerAdapter { 
 	Logger logger = LoggerFactory.getLogger(AuthServerConfig.class);
-	final Marker REQUEST_MARKER = MarkerFactory.getMarker("HTTP_REQUEST");
 	@Autowired
 	private AuthenticationManager authenticationManager;
 	@Autowired
@@ -46,9 +48,16 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 		endpoints.allowedTokenEndpointRequestMethods(HttpMethod.POST, HttpMethod.OPTIONS);
 		endpoints.authenticationManager(authenticationManager);
 		endpoints.tokenServices(tokenService);
+		/*
+		 * Approvalstore 객체를 선언하여 설정하거나, 직접 구현할 경우 허용에 관한 사항을 관리할 수 있다.
+		 * 아래의 주석처리된 내용이 없으며, auto approval 에 관한 사항이 없을 경우 로그인 후 매번 scope에 대한 approval을 요청한다
+		 * 기본 TokenApprovalStore를 사용하여도 Form 로그인 이후 매번 scope approval해야 하는 수고를 줄일 수 있다.
+		 * 현재 프로젝트는 application.properties에 auto approval 할 scopes를 관리하고 있음
+		 * 
 		TokenApprovalStore approvalStore = new TokenApprovalStore();
 		approvalStore.setTokenStore(tokenStore);
 		endpoints.approvalStore(approvalStore);
+		*/
 	}
 	/**
 	 * 보안에 관련된 설정
@@ -66,7 +75,8 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 		security.accessDeniedHandler((request, response, exception) -> logger.error(exception.getMessage()));
 	}
 	/**
-	 * OAuth서버에 접근을 요청하는 Client에 관한 설정
+	 * OAuth서버에 접근을 요청하는 Client에 관한 설정을 관리하기 위한 Configure
+	 * inMemory 나 jdbc 기반 Builder를 지원하므로 그것을 활용해도 되지만 별도의 Service를 구현
 	 */
 	@Override
 	public void configure(ClientDetailsServiceConfigurer clients) throws Exception {

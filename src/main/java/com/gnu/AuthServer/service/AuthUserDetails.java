@@ -1,4 +1,4 @@
-package com.gnu.AuthServer.security;
+package com.gnu.AuthServer.service;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -9,7 +9,11 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.gnu.AuthServer.entity.UserEntity;
-
+/**
+ * 
+ * @author gnu-gnu(geunwoo.j.shim@gmail.com)
+ *
+ */
 public class AuthUserDetails implements UserDetails {
 	private static final long serialVersionUID = 106806877220707136L;
 	private UserEntity entity;

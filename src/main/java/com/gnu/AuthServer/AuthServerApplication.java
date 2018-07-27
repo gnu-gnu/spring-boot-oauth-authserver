@@ -26,7 +26,6 @@ import com.gnu.AuthServer.repository.UserRepository;
 @SpringBootApplication
 public class AuthServerApplication extends WebMvcConfigurerAdapter implements CommandLineRunner{
 	Logger logger = LoggerFactory.getLogger(AuthServerApplication.class);
-	final Marker REQUEST_MARKER = MarkerFactory.getMarker("HTTP_REQUEST");
 	@Autowired
 	UserRepository userRepository;
 	@Resource(name="springSecurityFilterChain")
@@ -35,21 +34,24 @@ public class AuthServerApplication extends WebMvcConfigurerAdapter implements Co
 	public static void main(String[] args) {
 		SpringApplication.run(AuthServerApplication.class, args);
 	}
+	
 	@Bean
-	@Profile("redis")
-	public TokenStore tokenStore(RedisConnectionFactory factory){
-		// Redis가 설정된 상태에서는 redis store
-		return new RedisTokenStore(factory);
-	}
-	@Bean
+	@Profile("local") // 기본 active profile 은 application.properties에 local로 설정되어 있다.
 	public TokenStore InMemoryTokenStore(){
-		// 기본 토큰 스토어는 테스트용도로 in-memory store
+		logger.info("in-memory token store");
 		return new InMemoryTokenStore();
+	}
+	
+	@Bean
+	@Profile("redis") // redis token store 설정을 위해서는 -Dspring.profiles.active=redis 가 필요
+	public TokenStore tokenStore(RedisConnectionFactory factory){
+		logger.info("redis token store");
+		return new RedisTokenStore(factory);
 	}
 
 	
 	/**
-	 * 초기 ID/PW 데이터 설정 및 권한(=scope로 이용) 부여
+	 * 초기 ID/PW 데이터 설정
 	 */
 	@Override
 	public void run(String... arg0) throws Exception {

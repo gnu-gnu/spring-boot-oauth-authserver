@@ -16,7 +16,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
-
+/**
+ * 
+ * Request를 기록하기 위한 Filter class
+ * 
+ * @author gnu-gnu(geunwoo.j.shim@gmail.com)
+ *
+ */
 public class AuthInnerFilter implements Filter {
 	Logger logger = LoggerFactory.getLogger(AuthInnerFilter.class);
 	final Marker REQUEST_MARKER = MarkerFactory.getMarker("HTTP_REQUEST");
@@ -29,12 +35,12 @@ public class AuthInnerFilter implements Filter {
 	@Override
 	public void doFilter(ServletRequest arg0, ServletResponse arg1, FilterChain arg2)
 			throws IOException, ServletException {
-		// TODO Auto-generated method stub
 			HttpServletRequest req = (HttpServletRequest)arg0;
-			logger.info("--------- userprincipal : {}", req.getUserPrincipal());
-			logger.info("--------- call for {}", req.getRequestURI());
+			logger.info("START OF REQUEST -------------------------------");
+			logger.info("call for {}", req.getRequestURI());
+			logger.info("userprincipal : {}", req.getUserPrincipal());
 			Enumeration<String> names = req.getHeaderNames();
-			logger.info("----- headers");
+			logger.info("- headers");
 			String key = "";
 			while(names.hasMoreElements()){
 				key = names.nextElement();
@@ -45,12 +51,13 @@ public class AuthInnerFilter implements Filter {
 				}
 			}
 			String paramKey = "";
-			logger.info("----- params");
+			logger.info("- params");
 			Enumeration<String> params = req.getParameterNames();
 			while(params.hasMoreElements()){
 				paramKey = params.nextElement();
 				logger.info(REQUEST_MARKER, "{} : {}", paramKey, req.getParameter(paramKey));
 			}
+			logger.info("------------------------------- END OF REQUEST");
 			arg2.doFilter(arg0, arg1);
 		
 	}
