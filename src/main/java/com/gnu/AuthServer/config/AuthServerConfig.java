@@ -13,7 +13,7 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 
-import com.gnu.AuthServer.AuthInnerFilter;
+import com.gnu.AuthServer.filter.AuthInnerFilter;
 import com.gnu.AuthServer.service.AuthClientDetailsService;
 import com.gnu.AuthServer.service.AuthTokenService;
 

@@ -22,15 +22,14 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationManager;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
-import com.gnu.AuthServer.AuthInnerFilter;
 import com.gnu.AuthServer.repository.UserRepository;
 import com.gnu.AuthServer.service.AuthUserDetails;
 import com.gnu.AuthServer.service.AuthUserDetailsService;
@@ -95,9 +94,10 @@ public class AuthServerWebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http.authorizeRequests().antMatchers("/h2/**").permitAll().anyRequest().authenticated().and().formLogin().and()
-				.csrf().disable().addFilterBefore(new AuthInnerFilter(), BasicAuthenticationFilter.class);
+		http.authorizeRequests().antMatchers("/apps/login").permitAll().antMatchers("/h2/**").permitAll().anyRequest().authenticated().and().formLogin().and()
+				.csrf().disable();
 		http.headers().frameOptions().disable(); // UI redressing attack을 방지하기 위해 X-Frame-Options를 검증하는 부분, 편의상 disable
+		http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.NEVER);
 	}
 
 }

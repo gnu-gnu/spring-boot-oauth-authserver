@@ -1,4 +1,4 @@
-package com.gnu.AuthServer;
+package com.gnu.AuthServer.filter;
 
 import java.io.IOException;
 import java.util.Base64;
@@ -16,6 +16,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
 /**
  * 
  * Request를 기록하기 위한 Filter class
@@ -23,6 +26,8 @@ import org.slf4j.MarkerFactory;
  * @author gnu-gnu(geunwoo.j.shim@gmail.com)
  *
  */
+@Component
+@Order(value=Ordered.HIGHEST_PRECEDENCE)
 public class AuthInnerFilter implements Filter {
 	Logger logger = LoggerFactory.getLogger(AuthInnerFilter.class);
 	final Marker REQUEST_MARKER = MarkerFactory.getMarker("HTTP_REQUEST");
