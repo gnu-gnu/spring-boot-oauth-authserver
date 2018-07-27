@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -60,14 +59,17 @@ public class AuthServerApplication extends WebMvcConfigurerAdapter implements Co
 		userShim.createAuthority("write");
 		userShim.createAuthority("delete");
 		userShim.createAuthority("update");
+		userShim.setLocale("ko");
 		userRepository.save(userShim);
 		UserEntity userNoh = new UserEntity("noh", encoder.encode("pass"));
 		userNoh.createAuthority("read");
+		userShim.setLocale("jp");
 		userRepository.save(userNoh);
 		UserEntity userJee = new UserEntity("jee", encoder.encode("pass"));
 		userNoh.createAuthority("read");
 		userNoh.createAuthority("write");
 		userNoh.createAuthority("update");
+		userShim.setLocale("en");
 		userRepository.save(userJee);
 		springSecurityFilterChain.getFilterChains().forEach(value->{
 			value.getFilters().forEach(filter->logger.info(filter.toString()));

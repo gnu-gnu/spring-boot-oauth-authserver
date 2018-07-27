@@ -31,6 +31,8 @@ public class UserEntity {
 	private String username;
 	@Column(name="password")
 	private String password;
+	@Column(name="locale")
+	private String locale;
 	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER, mappedBy="userEntity") // userEntity를 참고한다는 것을 나타냄. mappedBy는 Owner를 결정
 	private List<AuthoritiesEntity> authorities = new ArrayList<AuthoritiesEntity>();
 	
@@ -93,17 +95,18 @@ public class UserEntity {
 	public void setAuthorities(List<AuthoritiesEntity> authorities) {
 		this.authorities = authorities;
 	}
+	
+	public String getLocale() {
+		return locale;
+	}
+
+	public void setLocale(String locale) {
+		this.locale = locale;
+	}
 
 	@Override
 	public String toString() {
-		return "UserEntity [id=" + id + ", username=" + username + ", password=" + password + ", authorities="
-				+ authorities + "]";
+		return "UserEntity [id=" + id + ", username=" + username + ", password=" + password + ", locale=" + locale
+				+ ", authorities=" + authorities + "]";
 	}
-
-
-
-	
-	
-	
-	
 }

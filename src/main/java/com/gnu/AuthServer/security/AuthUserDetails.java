@@ -27,6 +27,14 @@ public class AuthUserDetails implements UserDetails {
 		});
 		return authorities;
 	}
+	
+	public UserEntity getEntity() {
+		return entity;
+	}
+
+	public void setEntity(UserEntity entity) {
+		this.entity = entity;
+	}
 
 	@Override
 	public String getPassword() {

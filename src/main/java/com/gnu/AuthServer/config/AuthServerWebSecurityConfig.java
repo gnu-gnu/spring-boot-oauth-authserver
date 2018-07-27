@@ -1,7 +1,9 @@
 package com.gnu.AuthServer.config;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -59,7 +61,7 @@ public class AuthServerWebSecurityConfig extends WebSecurityConfigurerAdapter {
 				logger.info(authentication.getName() + "... auth start");
 				String username = authentication.getName();
 				CharSequence password = (CharSequence) authentication.getCredentials();
-
+				Map<String, Object> details = new HashMap<>();
 				AuthUserDetails user = (AuthUserDetails) userDetailsService.loadUserByUsername(username);
 				Set<GrantedAuthority> autho = (Set<GrantedAuthority>) user.getAuthorities();
 				autho.add(new SimpleGrantedAuthority("ACTUATOR"));
@@ -67,7 +69,12 @@ public class AuthServerWebSecurityConfig extends WebSecurityConfigurerAdapter {
 					logger.info(authentication.getName() + "... bad credential");
 					throw new BadCredentialsException("bad credential");
 				} else {
-					return new UsernamePasswordAuthenticationToken(user.getUsername(), password.toString(),autho);
+					UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(user.getUsername(), password.toString(),autho);
+					details.put("uname", user.getEntity().getUsername());
+					details.put("uid", user.getEntity().getId());
+					details.put("locale", user.getEntity().getLocale());
+					token.setDetails(details);
+					return token;
 				}
 			}
 

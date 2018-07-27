@@ -62,7 +62,7 @@ public class AuthoritiesEntity {
 
 	@Override
 	public String toString() {
-		return "AuthoritiesEntity [id=" + id + ", roleName=" + roleName + ", userEntity=" + userEntity + "]";
+		return "AuthoritiesEntity [id=" + id + ", roleName=" + roleName+"]";
 	}
 
 	

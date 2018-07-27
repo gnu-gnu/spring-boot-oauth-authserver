@@ -30,7 +30,7 @@ public class AuthUserDetailsService implements UserDetailsService{
 		}
 		logger.info(username+"... login success");
 		AuthUserDetails details = new AuthUserDetails(findEntity);
-		details.getAuthorities().forEach(System.out::println);
+		System.out.println(details);
 		return details;
 	}
 
