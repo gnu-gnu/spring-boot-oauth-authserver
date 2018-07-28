@@ -31,7 +31,6 @@ import org.springframework.web.context.WebApplicationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.gnu.AuthServer.dto.AccessToken;
-import com.gnu.AuthServer.service.AuthUserDetailsService;
 
 @RunWith(SpringRunner.class)
 @WebAppConfiguration
@@ -42,8 +41,6 @@ public class AuthServerApplicationTests {
 	@Autowired
 	private WebApplicationContext ctx;
 	
-	@Autowired
-	AuthUserDetailsService userDetailsService;
 	@Autowired
 	AuthenticationManager authenticationManager;
 	@Autowired
