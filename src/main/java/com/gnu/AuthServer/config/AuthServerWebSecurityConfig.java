@@ -94,7 +94,7 @@ public class AuthServerWebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http.authorizeRequests().antMatchers("/apps/login").permitAll().antMatchers("/h2/**").permitAll().anyRequest().authenticated().and().formLogin().and()
+		http.authorizeRequests().antMatchers("/login").permitAll().antMatchers("/h2/**").permitAll().anyRequest().authenticated().and().formLogin().and()
 				.csrf().disable();
 		http.headers().frameOptions().disable(); // UI redressing attack을 방지하기 위해 X-Frame-Options를 검증하는 부분, 편의상 disable
 		http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.NEVER);
