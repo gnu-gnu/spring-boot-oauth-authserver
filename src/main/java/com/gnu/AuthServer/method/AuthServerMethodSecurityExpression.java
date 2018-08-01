@@ -21,9 +21,12 @@ public class AuthServerMethodSecurityExpression {
 	public AuthServerMethodSecurityExpression(Authentication auth) {
 		this.auth = auth;
 	}
-
-	public boolean isOk() {
+	/**
+	 * #auth.isOk() expression을 호출할 경우 이 메소드를 call하게 된다. 이 메소드의 결과가 true, false 냐에 따라 인가  여부가 결정됨
+	 * @return
+	 */
+	public boolean isOk(boolean bool) {
 		logger.info(auth.toString());
-		return true;
+		return bool;
 	}
 }
