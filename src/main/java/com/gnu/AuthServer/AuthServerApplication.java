@@ -49,7 +49,7 @@ public class AuthServerApplication extends WebMvcConfigurerAdapter implements Co
 
 	
 	/**
-	 * 초기 ID/PW 데이터 설정
+	 * 초기 ID/PW 데이터 설정J
 	 */
 	@Override
 	public void run(String... arg0) throws Exception {

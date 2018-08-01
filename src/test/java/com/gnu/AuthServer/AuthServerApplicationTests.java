@@ -128,7 +128,7 @@ public class AuthServerApplicationTests {
 		requestParam.add("code", requestToken);
 		requestParam.add("redirect_uri", CALLBACK_URL);
 		requestParam.add("client_id", CLIENT_ID);
-		requestParam.add("client_secret", CLIENT_SECRET);
+		// requestParam.add("client_secret", CLIENT_SECRET);
 		return getAccessToken(requestParam);
 	}
 	/**
@@ -147,7 +147,7 @@ public class AuthServerApplicationTests {
 		requestParam.add("refresh_token", refreshToken);
 		requestParam.add("grant_type", GrantTypes.REFRESH_TOKEN);
 		requestParam.add("client_id", CLIENT_ID);
-		requestParam.add("client_secret", CLIENT_SECRET);
+		// requestParam.add("client_secret", CLIENT_SECRET);
 		return getAccessToken(requestParam);
 	}
 	/**
@@ -162,7 +162,7 @@ public class AuthServerApplicationTests {
 		MultiValueMap<String, String> requestParam = new LinkedMultiValueMap<>();
 		requestParam.add("grant_type", "password");
 		requestParam.add("client_id", CLIENT_ID);
-		requestParam.add("client_secret", CLIENT_SECRET);
+		// requestParam.add("client_secret", CLIENT_SECRET);
 		requestParam.add("scope", "read+check");
 		requestParam.add("username", username);
 		requestParam.add("password", password);
@@ -183,7 +183,7 @@ public class AuthServerApplicationTests {
 		requestParam.add("response_type", "code");
 		requestParam.add("redirect_uri", CALLBACK_URL);
 		requestParam.add("client_id", CLIENT_ID);
-		requestParam.add("client_secret", CLIENT_SECRET);
+		// requestParam.add("client_secret", CLIENT_SECRET);
 		requestParam.add("scope", "read+check");
 		MockHttpServletRequestBuilder reqBuilder = post(REQUEST_TOKEN_ENDPOINT).with(authentication(auth)).params(requestParam).contentType(MediaType.APPLICATION_FORM_URLENCODED).accept(MediaType.APPLICATION_JSON_UTF8).characterEncoding("UTF-8");
 		ResultActions result = mvc.perform(reqBuilder).andExpect(status().is3xxRedirection());

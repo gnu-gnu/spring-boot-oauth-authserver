@@ -54,29 +54,4 @@ public class AuthTokenService extends DefaultTokenServices {
 			}
 		});
 	}
-	
-	@Override
-	public void setTokenEnhancer(TokenEnhancer accessTokenEnhancer) {
-		super.setTokenEnhancer(accessTokenEnhancer);
-	}
-
-	@Override
-	public void setAccessTokenValiditySeconds(int accessTokenValiditySeconds) {
-		// TODO Auto-generated method stub
-		super.setAccessTokenValiditySeconds(accessTokenValiditySeconds);
-	}
-
-	@Override
-	public void setReuseRefreshToken(boolean reuseRefreshToken) {
-		// TODO Auto-generated method stub
-		super.setReuseRefreshToken(reuseRefreshToken);
-	}
-
-	@Override
-	public void setTokenStore(TokenStore tokenStore) {
-		// TODO Auto-generated method stub
-		super.setTokenStore(tokenStore);
-	}
-
-
 }

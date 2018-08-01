@@ -32,8 +32,8 @@ public class AuthoritiesEntity {
 	}
 
 	public AuthoritiesEntity(String roleName, UserEntity userEntity) {
-		this.roleName = roleName;
-		this.userEntity = userEntity;
+		setRoleName(roleName);
+		setUserEntity(userEntity);
 	}
 
 	public Long getId() {

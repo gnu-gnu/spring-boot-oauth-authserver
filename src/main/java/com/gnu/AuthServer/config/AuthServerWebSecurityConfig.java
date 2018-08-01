@@ -1,6 +1,7 @@
 package com.gnu.AuthServer.config;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,8 +12,10 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -29,6 +32,10 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationManager;
+import org.springframework.util.StringUtils;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.gnu.AuthServer.repository.UserRepository;
 import com.gnu.AuthServer.service.AuthUserDetails;
@@ -44,6 +51,7 @@ import com.gnu.AuthServer.service.AuthUserDetailsService;
  */
 @Configuration
 @EnableWebSecurity
+@PropertySource("security.properties")
 public class AuthServerWebSecurityConfig extends WebSecurityConfigurerAdapter {
 	Logger logger = LoggerFactory.getLogger(AuthServerWebSecurityConfig.class);
 	final Marker REQUEST_MARKER = MarkerFactory.getMarker("HTTP_REQUEST");
@@ -51,6 +59,9 @@ public class AuthServerWebSecurityConfig extends WebSecurityConfigurerAdapter {
 	UserRepository userRepository;
 	@Autowired
 	AuthUserDetailsService userDetailsService;
+	@Value("${securities.permitall}")
+	private String permitAll;
+	
 	
 	BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 	
@@ -94,10 +105,21 @@ public class AuthServerWebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http.authorizeRequests().antMatchers("/login").permitAll().antMatchers("/h2/**").permitAll().anyRequest().authenticated().and().formLogin().and()
+		http.authorizeRequests().antMatchers(StringUtils.commaDelimitedListToStringArray(permitAll)).permitAll().anyRequest().authenticated().and().formLogin().and()
 				.csrf().disable();
 		http.headers().frameOptions().disable(); // UI redressing attack을 방지하기 위해 X-Frame-Options를 검증하는 부분, 편의상 disable
 		http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.NEVER);
+		http.cors();
+	}
+	
+	@Bean
+	public CorsConfigurationSource corsConfigurationSource() {
+		CorsConfiguration configuration = new CorsConfiguration();
+		configuration.setAllowedOrigins(Arrays.asList("*"));
+		configuration.setAllowedMethods(Arrays.asList("GET","POST"));
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/**", configuration);
+		return source;
 	}
 
 }

@@ -47,13 +47,11 @@ public class AuthClientDetailsService implements ClientDetailsService {
 		logger.info("load client from \"{}\"", arg0);
 		BaseClientDetails details = new BaseClientDetails();
 		Set<String> set = new HashSet<>();
-		set.add("http://localhost:7077/resources/open/callback");
+		set.add("http://localhost:7077/resources/");
 		details.setClientId("gnu-gnu");
 		details.setAuthorizedGrantTypes(Arrays.asList(GrantTypes.AUTHORIZATION_CODE, GrantTypes.PASSWORD, GrantTypes.REFRESH_TOKEN));
-		details.setClientSecret("gnu-secret");
 		details.setRegisteredRedirectUri(set);
 		details.setScope(StringUtils.commaDelimitedListToSet(autoScopes));
-		details.setAuthorities(AuthorityUtils.commaSeparatedStringToAuthorityList("read"));
 		details.setAutoApproveScopes(StringUtils.commaDelimitedListToSet(autoScopes));
 		return details;
 	}

@@ -71,7 +71,7 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 	public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
 		security.addTokenEndpointAuthenticationFilter(new AuthInnerFilter()); // ~~/authorize 에 대한 필터
 		security.allowFormAuthenticationForClients(); // 기본적으로 HTTP HEADER AUTH가 적용되므로, FORM 전송으로 AUTH하기 위해서 적용
-		security.checkTokenAccess("hasAuthority('RESOURCE')"); // ~~/check_token으로 remoteTokenService가 토큰의 해석을 의뢰할 경우, 해당 endpoint의 권한 설정(기본 denyAll())
+		security.checkTokenAccess("permitAll()"); // ~~/check_token으로 remoteTokenService가 토큰의 해석을 의뢰할 경우, 해당 endpoint의 권한 설정(기본 denyAll())
 		security.accessDeniedHandler((request, response, exception) -> logger.error(exception.getMessage()));
 	}
 	/**
